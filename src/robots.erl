@@ -61,8 +61,10 @@ match(_, <<$$>>) ->
     false;
 match(_, <<$*>>) ->
     true;
-match(_, <<$/>>) ->
+match(<<$/, _/binary>>, <<$/>>) ->
     true;
+match(_, <<$/>>) ->
+    false;
 match(<<>>, <<>>) ->
     true;
 match(<<>>, _) ->
