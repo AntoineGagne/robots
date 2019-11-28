@@ -1,3 +1,6 @@
+%% @author Antoine Gagné <gagnantoine@gmail.com>
+%% @copyright 2019 Antoine Gagné
+%% @doc Parse and manipulate robots.txt files according to the specification.
 -module(robots).
 
 -ifdef(TEST).
@@ -46,6 +49,7 @@ is_allowed(_Agent, _Url, _Rules) ->
 %%% Internal functions
 %%%===================================================================
 
+-spec build_rules(binary() | string()) -> {ok, rules_index()}.
 build_rules(Content) when is_list(Content) ->
     Binary = unicode:characters_to_binary(Content),
     build_rules(Binary);
@@ -55,24 +59,27 @@ build_rules(Content) ->
     {_, _, Rules} = lists:foldl(fun build_rules/2, {[], false, #{}}, Sanitized),
     {ok, Rules}.
 
+-spec sanitize(binary()) -> false | {true, {binary(), binary()}}.
 sanitize(Line) ->
     Trimmed = trim(Line),
     case string:take(Trimmed, [$#], true) of
         {<<>>, _} -> false;
         {NotComment, _} ->
             Split = string:split(NotComment, ":"),
-            [Key, Agent | _] = lists:map(fun trim/1, Split),
-            {true, {string:lowercase(Key), Agent}}
+            [Key, Value | _] = lists:map(fun trim/1, Split),
+            {true, {string:lowercase(Key), Value}}
     end.
 
 -spec trim(unicode:chardata()) -> unicode:chardata().
 trim(String) ->
     string:trim(String, both).
 
+-spec build_rules({binary(), binary()}, {[agent()], boolean(), rules_index()}) ->
+    {[agent()], boolean(), rules_index()}.
 build_rules({<<"user-agent">>, Agent}, {Agents, false, RulesIndex}) ->
     {[Agent | Agents], false, RulesIndex};
-build_rules({<<"user-agent">>, Agent}, {Agents, true, RulesIndex}) ->
-    {[Agent | Agents], false, RulesIndex};
+build_rules({<<"user-agent">>, Agent}, {_Agents, true, RulesIndex}) ->
+    {[Agent], false, RulesIndex};
 build_rules({<<"allow">>, Rule}, {Agents, _, RulesIndex}) ->
     {_, UpdatedIndex} = lists:foldl(fun update_index/2, {{allowed, Rule}, RulesIndex}, Agents),
     {Agents, true, UpdatedIndex};
@@ -82,6 +89,8 @@ build_rules({<<"disallow">>, Rule}, {Agents, _, RulesIndex}) ->
 build_rules({_Invalid, _Rule}, Acc) ->
     Acc.
 
+-spec update_index(agent(), {{status(), rule()}, rules_index()}) ->
+    {{status(), rule()}, rules_index()}.
 update_index(Agent, {{allowed, Rule}, RulesIndex}) ->
     Update = fun ({Allowed, Disallowed}) -> {[Rule | Allowed], Disallowed} end,
     UpdatedIndex = maps:update_with(Agent, Update, {[Rule], []}, RulesIndex),
@@ -118,7 +127,7 @@ match(<<_, _/binary>>, <<_, _/binary>>) ->
     false.
 
 %%%===================================================================
-%%% Internal functions
+%%% EUnit Tests
 %%%===================================================================
 
 -ifdef(TEST).
