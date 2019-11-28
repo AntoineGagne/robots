@@ -55,12 +55,6 @@ build_rules(Content) ->
     {ok, #{}}.
 
 -spec match(binary(), rule()) -> boolean().
-match(<<>>, <<>>) ->
-    true;
-match(<<>>, _) ->
-    false;
-match(_, <<>>) ->
-    true;
 match(<<>>, <<$$>>) ->
     true;
 match(_, <<$$>>) ->
@@ -68,6 +62,12 @@ match(_, <<$$>>) ->
 match(_, <<$*>>) ->
     true;
 match(_, <<$/>>) ->
+    true;
+match(<<>>, <<>>) ->
+    true;
+match(<<>>, _) ->
+    false;
+match(_, <<>>) ->
     true;
 match(<<A, R1/binary>>, <<$*, A, R2/binary>>) ->
     match(R1, R2);
