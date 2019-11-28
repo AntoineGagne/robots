@@ -13,7 +13,7 @@
 
 -export_type([agent_rules/0]).
 
--type code() :: 400..599.
+-type code() :: 100..599.
 -type agent() :: binary().
 -type rule() :: binary().
 -type rules() :: [rule()].
