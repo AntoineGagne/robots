@@ -12,6 +12,9 @@
 -define(EMPTY_CONTENT, <<>>).
 -define(USER_AGENT, <<"bot/1.0.0">>).
 -define(AN_URL, <<"/bot-url">>).
+-define(A_RULE, <<"/foo/*">>).
+-define(A_VALID_CODE, 200).
+-define(A_VALID_CONTENT, <<"User-Agent: ", ?USER_AGENT/binary, "\nAllow: ", ?A_RULE/binary>>).
 
 all() ->
     [
@@ -19,7 +22,8 @@ all() ->
      allow_all_on_4xx_code,
      disallow_all_on_5xx,
      return_true_if_everything_is_allowed,
-     return_false_if_everything_is_disallowed
+     return_false_if_everything_is_disallowed,
+     can_parse_valid_robots_txt
     ].
 
 init_per_testcase(_Name, Config) ->
@@ -54,6 +58,12 @@ return_false_if_everything_is_disallowed() ->
       "when checking if allowed, then returns false."}].
 return_false_if_everything_is_disallowed(_Config) ->
     ?assertNot(robots:is_allowed(?USER_AGENT, ?AN_URL, {disallowed, all})).
+
+can_parse_valid_robots_txt() ->
+    [{doc, "Given a valid robots.txt content, when parsing, then returns all rules."}].
+can_parse_valid_robots_txt(_Config) ->
+    ?assertMatch({ok, #{?USER_AGENT := {[?A_RULE], []}}},
+                 robots:parse(?A_VALID_CONTENT, ?A_VALID_CODE)).
 
 %%%===================================================================
 %%% Internal functions

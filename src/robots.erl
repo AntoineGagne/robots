@@ -52,7 +52,8 @@ build_rules(Content) when is_list(Content) ->
 build_rules(Content) ->
     Split = string:lexemes(Content, [[$\r, $\n], $\r, $\n]),
     Sanitized = lists:filtermap(fun sanitize/1, Split),
-    lists:foldl(fun build_rules/2, {[], false, #{}}, Sanitized).
+    {_, _, Rules} = lists:foldl(fun build_rules/2, {[], false, #{}}, Sanitized),
+    {ok, Rules}.
 
 sanitize(Line) ->
     Trimmed = trim(Line),
@@ -73,11 +74,13 @@ build_rules({<<"user-agent">>, Agent}, {Agents, false, RulesIndex}) ->
 build_rules({<<"user-agent">>, Agent}, {Agents, true, RulesIndex}) ->
     {[Agent | Agents], false, RulesIndex};
 build_rules({<<"allow">>, Rule}, {Agents, _, RulesIndex}) ->
-    UpdatedIndex = lists:foldl(fun update_index/2, {{allowed, Rule}, RulesIndex}, Agents),
+    {_, UpdatedIndex} = lists:foldl(fun update_index/2, {{allowed, Rule}, RulesIndex}, Agents),
     {Agents, true, UpdatedIndex};
 build_rules({<<"disallow">>, Rule}, {Agents, _, RulesIndex}) ->
-    UpdatedIndex = lists:foldl(fun update_index/2, {{disallowed, Rule}, RulesIndex}, Agents),
-    {Agents, true, UpdatedIndex}.
+    {_, UpdatedIndex} = lists:foldl(fun update_index/2, {{disallowed, Rule}, RulesIndex}, Agents),
+    {Agents, true, UpdatedIndex};
+build_rules({_Invalid, _Rule}, Acc) ->
+    Acc.
 
 update_index(Agent, {{allowed, Rule}, RulesIndex}) ->
     Update = fun ({Allowed, Disallowed}) -> {[Rule | Allowed], Disallowed} end,
