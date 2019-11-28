@@ -61,6 +61,10 @@ match(<<>>, _) ->
     false;
 match(_, <<>>) ->
     true;
+match(<<>>, <<$$>>) ->
+    true;
+match(_, <<$$>>) ->
+    false;
 match(_, <<$*>>) ->
     true;
 match(_, <<$/>>) ->
@@ -79,7 +83,7 @@ match(<<_, _/binary>>, <<_, _/binary>>) ->
 %%%===================================================================
 
 -ifdef(TEST).
-examples_1_test_() ->
+simple_path_test_() ->
     Rule = <<"/fish">>,
     [
      ?_assert(match(<<"/fish">>, Rule)),
@@ -87,6 +91,71 @@ examples_1_test_() ->
      ?_assert(match(<<"/fish/salmon.html">>, Rule)),
      ?_assert(match(<<"/fishheads">>, Rule)),
      ?_assert(match(<<"/fishheads/yummy.html">>, Rule)),
-     ?_assert(match(<<"/fish.php?id=anything">>, Rule))
+     ?_assert(match(<<"/fish.php?id=anything">>, Rule)),
+
+     ?_assertNot(match(<<"/Fish.asp">>, Rule)),
+     ?_assertNot(match(<<"/catfish">>, Rule)),
+     ?_assertNot(match(<<"/?id=fish">>, Rule))
+    ].
+
+trailing_wildcard_test_() ->
+    Rule = <<"/fish*">>,
+    [
+     ?_assert(match(<<"/fish">>, Rule)),
+     ?_assert(match(<<"/fish.html">>, Rule)),
+     ?_assert(match(<<"/fish/salmon.html">>, Rule)),
+     ?_assert(match(<<"/fishheads">>, Rule)),
+     ?_assert(match(<<"/fishheads/yummy.html">>, Rule)),
+     ?_assert(match(<<"/fish.php?id=anything">>, Rule)),
+
+     ?_assertNot(match(<<"/Fish.asp">>, Rule)),
+     ?_assertNot(match(<<"/catfish">>, Rule)),
+     ?_assertNot(match(<<"/?id=fish">>, Rule))
+    ].
+
+trailing_slash_test_() ->
+    Rule = <<"/fish/">>,
+    [
+     ?_assert(match(<<"/fish/">>, Rule)),
+     ?_assert(match(<<"/fish/?id=anything">>, Rule)),
+     ?_assert(match(<<"/fish/salmon.htm">>, Rule)),
+
+     ?_assertNot(match(<<"/fish">>, Rule)),
+     ?_assertNot(match(<<"/fish.html">>, Rule)),
+     ?_assertNot(match(<<"/Fish/Salmon.asp">>, Rule))
+    ].
+
+nested_wildcard_test_() ->
+    Rule = <<"/*.php">>,
+    [
+     ?_assert(match(<<"/filename.php">>, Rule)),
+     ?_assert(match(<<"/folder/filename.php">>, Rule)),
+     ?_assert(match(<<"/folder/filename.php?parameters">>, Rule)),
+     ?_assert(match(<<"/folder/any.php.file.html">>, Rule)),
+     ?_assert(match(<<"/filename.php/">>, Rule)),
+
+     ?_assertNot(match(<<"/">>, Rule)),
+     ?_assertNot(match(<<"/windows.PHP">>, Rule))
+    ].
+
+nested_wilcard_with_ending_test_() ->
+    Rule = <<"/*.php$">>,
+    [
+     ?_assert(match(<<"/filename.php">>, Rule)),
+     ?_assert(match(<<"/folder/filename.php">>, Rule)),
+
+     ?_assertNot(match(<<"/filename.php?parameters">>, Rule)),
+     ?_assertNot(match(<<"/filename.php/">>, Rule)),
+     ?_assertNot(match(<<"/filename.php5">>, Rule)),
+     ?_assertNot(match(<<"/windows.PHP">>, Rule))
+    ].
+
+simple_path_with_nested_wildcard_test_() ->
+    Rule = <<"/fish*.php">>,
+    [
+     ?_assert(match(<<"/fish.php">>, Rule)),
+     ?_assert(match(<<"/fishheads/catfish.php?parameters">>, Rule)),
+
+     ?_assertNot(match(<<"/Fish.PHP">>, Rule))
     ].
 -endif.
