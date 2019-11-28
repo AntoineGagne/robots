@@ -2,10 +2,14 @@
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
+
+-compile(nowarn_export_all).
+-compile(export_all).
 -endif.
 
 %% API
 -export([parse/2,
+         match/2,
          is_allowed/3]).
 
 -export_type([agent_rules/0]).
@@ -51,7 +55,6 @@ build_rules(Content) when is_list(Content) ->
     build_rules(Binary);
 build_rules(Content) ->
     _Split = string:lexemes(Content, [[$\r, $\n], $\r, $\n]),
-    _ = match(<<"">>, <<"">>),
     {ok, #{}}.
 
 -spec match(binary(), rule()) -> boolean().
@@ -79,14 +82,12 @@ match(<<_, _/binary>>, <<_, _/binary>>) ->
 %%%===================================================================
 
 -ifdef(EUNIT).
-
 examples_1() ->
     Rule = <<"/fish">>,
-    ?_assert(match(<<"/fish">>, Rule)),
-    ?_assert(match(<<"/fish.html">>, Rule)),
-    ?_assert(match(<<"/fish/salmon.html">>, Rule)),
-    ?_assert(match(<<"/fishheads">>, Rule)),
-    ?_assert(match(<<"/fishheads/yummy.html">>, Rule)),
-    ?_assert(match(<<"/fish.php?id=anything">>, Rule)).
-
+    ?assert(match(<<"/fish">>, Rule)),
+    ?assert(match(<<"/fish.html">>, Rule)),
+    ?assert(match(<<"/fish/salmon.html">>, Rule)),
+    ?assert(match(<<"/fishheads">>, Rule)),
+    ?assert(match(<<"/fishheads/yummy.html">>, Rule)),
+    ?assert(match(<<"/fish.php?id=anything">>, Rule)).
 -endif.
