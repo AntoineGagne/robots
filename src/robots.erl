@@ -2,9 +2,6 @@
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
-
--compile(nowarn_export_all).
--compile(export_all).
 -endif.
 
 %% API
@@ -81,13 +78,15 @@ match(<<_, _/binary>>, <<_, _/binary>>) ->
 %%% Internal functions
 %%%===================================================================
 
--ifdef(EUNIT).
-examples_1() ->
+-ifdef(TEST).
+examples_1_test_() ->
     Rule = <<"/fish">>,
-    ?assert(match(<<"/fish">>, Rule)),
-    ?assert(match(<<"/fish.html">>, Rule)),
-    ?assert(match(<<"/fish/salmon.html">>, Rule)),
-    ?assert(match(<<"/fishheads">>, Rule)),
-    ?assert(match(<<"/fishheads/yummy.html">>, Rule)),
-    ?assert(match(<<"/fish.php?id=anything">>, Rule)).
+    [
+     ?_assert(match(<<"/fish">>, Rule)),
+     ?_assert(match(<<"/fish.html">>, Rule)),
+     ?_assert(match(<<"/fish/salmon.html">>, Rule)),
+     ?_assert(match(<<"/fishheads">>, Rule)),
+     ?_assert(match(<<"/fishheads/yummy.html">>, Rule)),
+     ?_assert(match(<<"/fish.php?id=anything">>, Rule))
+    ].
 -endif.
