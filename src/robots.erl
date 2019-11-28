@@ -9,7 +9,6 @@
 
 %% API
 -export([parse/2,
-         match/2,
          is_allowed/3]).
 
 -export_type([agent_rules/0]).
