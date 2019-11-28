@@ -15,6 +15,7 @@
 -define(A_RULE, <<"/foo/*">>).
 -define(A_VALID_CODE, 200).
 -define(A_VALID_CONTENT, <<"User-Agent: ", ?USER_AGENT/binary, "\nAllow: ", ?A_RULE/binary>>).
+-define(A_MALFORMED_CONTENT, <<"User-Agent: ", ?USER_AGENT/binary, "\n", ?A_RULE/binary>>).
 
 all() ->
     [
@@ -23,7 +24,8 @@ all() ->
      disallow_all_on_5xx,
      return_true_if_everything_is_allowed,
      return_false_if_everything_is_disallowed,
-     can_parse_valid_robots_txt
+     can_parse_valid_robots_txt,
+     can_handle_malformed_content
     ].
 
 init_per_testcase(_Name, Config) ->
@@ -64,6 +66,12 @@ can_parse_valid_robots_txt() ->
 can_parse_valid_robots_txt(_Config) ->
     ?assertMatch({ok, #{?USER_AGENT := {[?A_RULE], []}}},
                  robots:parse(?A_VALID_CONTENT, ?A_VALID_CODE)).
+
+can_handle_malformed_content() ->
+    [{doc, "Given a malformed content, when parsing, then ignores the malformed part."}].
+can_handle_malformed_content(_Config) ->
+    ?assertMatch({ok, _},
+                 robots:parse(?A_MALFORMED_CONTENT, ?A_VALID_CODE)).
 
 %%%===================================================================
 %%% Internal functions

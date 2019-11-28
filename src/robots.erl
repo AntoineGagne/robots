@@ -64,11 +64,18 @@ sanitize(Line) ->
     Trimmed = trim(Line),
     case string:take(Trimmed, [$#], true) of
         {<<>>, _} -> false;
-        {NotComment, _} ->
-            Split = string:split(NotComment, ":"),
-            [Key, Value | _] = lists:map(fun trim/1, Split),
-            {true, {string:lowercase(Key), Value}}
+        {NotComment, _} -> handle_line(NotComment)
     end.
+
+-spec handle_line(binary()) -> {true, {binary(), binary()}} | false.
+handle_line(Line) ->
+  case string:split(Line, ":") of
+      Split=[_, _ | _] ->
+          [Key, Value | _] = lists:map(fun trim/1, Split),
+          {true, {string:lowercase(Key), Value}};
+      _ ->
+          false
+  end.
 
 -spec trim(unicode:chardata()) -> unicode:chardata().
 trim(String) ->
