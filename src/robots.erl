@@ -51,8 +51,26 @@ build_rules(Content) when is_list(Content) ->
     Binary = unicode:characters_to_binary(Content),
     build_rules(Binary);
 build_rules(Content) ->
-    _Split = string:lexemes(Content, [[$\r, $\n], $\r, $\n]),
-    {ok, #{}}.
+    Split = string:lexemes(Content, [[$\r, $\n], $\r, $\n]),
+    Sanitized = lists:filtermap(fun sanitize/1, Split),
+    lists:foldl(fun build_rules/2, {[], #{}}, Sanitized).
+
+-spec sanitize(unicode:chardata()) -> {true, [unicode:chardata()]} | false.
+sanitize(Line) ->
+    Trimmed = trim(Line),
+    case string:take(Trimmed, [$#], true) of
+        {<<>>, _} -> false;
+        {NotComment, _} ->
+            Split = string:split(NotComment, ":"),
+            {true, lists:map(fun trim/1, Split)}
+    end.
+
+-spec trim(unicode:chardata()) -> unicode:chardata().
+trim(String) ->
+    string:trim(String, both).
+
+build_rules(_Line, {_Agents, Rules}) ->
+    Rules.
 
 -spec match(binary(), rule()) -> boolean().
 match(<<>>, <<$$>>) ->
