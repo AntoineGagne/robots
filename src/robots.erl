@@ -33,6 +33,8 @@
 %%%===================================================================
 
 -spec parse(content(), code()) -> {ok, agent_rules()} | {error, term()}.
+%% @doc Parses the content of the <em>robot.txt</em> and returns all the rules
+%%      indexed by their agents.
 parse(_Content, Code) when Code >= 500 andalso Code < 600 ->
     {ok, {disallowed, all}};
 parse(_Content, Code) when Code >= 400 ->
@@ -43,6 +45,7 @@ parse(_Content, Code) ->
     {error, {invalid_status_code, Code}}.
 
 -spec is_allowed(agent(), uri_string:uri_string(), agent_rules()) -> boolean().
+%% @doc Verifies that the given URL is allowed for the specified agent.
 is_allowed(_Agent, _Url, {allowed, all}) ->
     true;
 is_allowed(_Agent, _Url, {disallowed, all}) ->
@@ -51,6 +54,7 @@ is_allowed(_Agent, _Url, _Rules) ->
     undefined.
 
 -spec sitemap(agent_rules()) -> {ok, sitemap()} | {error, not_found}.
+%% @doc Fetches the sitemap of the parsed index.
 sitemap(RulesIndex) ->
     case maps:find(sitemap, RulesIndex) of
         error -> {error, not_found};
