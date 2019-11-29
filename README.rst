@@ -9,6 +9,8 @@ robots
 
 .. sectnum::
 
+A library that parses and validates rules from ``robots.txt``.
+
 Installation
 ============
 
