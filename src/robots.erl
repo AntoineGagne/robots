@@ -89,6 +89,8 @@ handle_line(Line) ->
           false
   end.
 
+-spec sort_rules(agent() | sitemap, {[rule()], [rule()]} | binary()) ->
+    binary() | {[rule()], [rule()]}.
 sort_rules(_, {Allowed, Disallowed}) ->
     Compare = fun (R1, R2) -> not (R1 =< R2) end,
     {lists:sort(Compare, Allowed), lists:sort(Compare, Disallowed)};
