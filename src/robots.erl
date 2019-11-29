@@ -9,6 +9,8 @@
 
 %% API
 -export([parse/2,
+         match/2,
+         sitemap/1,
          is_allowed/3]).
 
 -export_type([agent_rules/0]).
@@ -19,8 +21,12 @@
 -type rules() :: [rule()].
 -type content() :: string() | binary().
 -type status() :: allowed | disallowed.
--type rules_index() :: #{agent() := {Allowed :: rules(), Disallowed :: rules()}}.
+-type rules_index() :: #{agent() := {Allowed :: rules(), Disallowed :: rules()},
+                         sitemap => binary()}.
+-type sitemap() :: binary().
 -opaque agent_rules() :: {status(), all} | rules_index().
+
+-define(ALL, <<"*">>).
 
 %%%===================================================================
 %%% API
@@ -44,6 +50,13 @@ is_allowed(_Agent, _Url, {disallowed, all}) ->
 is_allowed(_Agent, _Url, _Rules) ->
     undefined.
 
+-spec sitemap(agent_rules()) -> {ok, sitemap()} | {error, not_found}.
+sitemap(RulesIndex) ->
+    case maps:find(sitemap, RulesIndex) of
+        error -> {error, not_found};
+        V={ok, _} -> V
+    end.
+
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
@@ -56,7 +69,7 @@ build_rules(Content) ->
     Split = string:lexemes(Content, [[$\r, $\n], $\r, $\n]),
     Sanitized = lists:filtermap(fun sanitize/1, Split),
     {_, _, Rules} = lists:foldl(fun build_rules/2, {[], false, #{}}, Sanitized),
-    {ok, Rules}.
+    {ok, maps:map(fun sort_rules/2, Rules)}.
 
 -spec sanitize(binary()) -> false | {true, {binary(), binary()}}.
 sanitize(Line) ->
@@ -76,6 +89,12 @@ handle_line(Line) ->
           false
   end.
 
+sort_rules(_, {Allowed, Disallowed}) ->
+    Compare = fun (R1, R2) -> not (R1 =< R2) end,
+    {lists:sort(Compare, Allowed), lists:sort(Compare, Disallowed)};
+sort_rules(sitemap, Value) ->
+    Value.
+
 -spec trim(unicode:chardata()) -> unicode:chardata().
 trim(String) ->
     string:trim(String, both).
@@ -92,6 +111,8 @@ build_rules({<<"allow">>, Rule}, {Agents, _, RulesIndex}) ->
 build_rules({<<"disallow">>, Rule}, {Agents, _, RulesIndex}) ->
     {_, UpdatedIndex} = lists:foldl(fun update_index/2, {{disallowed, Rule}, RulesIndex}, Agents),
     {Agents, true, UpdatedIndex};
+build_rules({<<"sitemap">>, Map}, {Agents, ParsingRules, RulesIndex}) ->
+    {Agents, ParsingRules, RulesIndex#{sitemap => Map}};
 build_rules({_Invalid, _Rule}, Acc) ->
     Acc.
 

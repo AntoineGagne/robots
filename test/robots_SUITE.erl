@@ -16,6 +16,8 @@
 -define(A_VALID_CODE, 200).
 -define(A_VALID_CONTENT, <<"User-Agent: ", ?USER_AGENT/binary, "\nAllow: ", ?A_RULE/binary>>).
 -define(A_MALFORMED_CONTENT, <<"User-Agent: ", ?USER_AGENT/binary, "\n", ?A_RULE/binary>>).
+-define(SITEMAP, <<"http://somesitemap.com/map.xml">>).
+-define(CONTENT_WITH_SITEMAP, <<"Sitemap:", ?SITEMAP/binary>>).
 
 all() ->
     [
@@ -25,7 +27,9 @@ all() ->
      return_true_if_everything_is_allowed,
      return_false_if_everything_is_disallowed,
      can_parse_valid_robots_txt,
-     can_handle_malformed_content
+     can_handle_malformed_content,
+     can_fetch_sitemap,
+     return_error_on_non_existent_sitemap
     ].
 
 init_per_testcase(_Name, Config) ->
@@ -72,6 +76,20 @@ can_handle_malformed_content() ->
 can_handle_malformed_content(_Config) ->
     ?assertMatch({ok, _},
                  robots:parse(?A_MALFORMED_CONTENT, ?A_VALID_CODE)).
+
+can_fetch_sitemap() ->
+    [{doc, "Given content with sitemap, when parsing, then returns the sitemap."}].
+can_fetch_sitemap(_Config) ->
+    {ok, RulesIndex} = robots:parse(?CONTENT_WITH_SITEMAP, ?A_VALID_CODE),
+
+    ?assertMatch({ok, ?SITEMAP}, robots:sitemap(RulesIndex)).
+
+return_error_on_non_existent_sitemap() ->
+    [{doc, "Given content without sitemap, when parsing, then returns an error."}].
+return_error_on_non_existent_sitemap(_Config) ->
+    {ok, RulesIndex} = robots:parse(?A_VALID_CONTENT, ?A_VALID_CODE),
+
+    ?assertMatch({error, not_found}, robots:sitemap(RulesIndex)).
 
 %%%===================================================================
 %%% Internal functions
