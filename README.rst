@@ -21,7 +21,7 @@ This library is available on `hex.pm <https://hex.pm/packages/robots>`_.
 To install this library, simply add the following lines to your
 ``rebar.config``:
 
-.. code-block: erlang
+.. code-block:: erlang
 
     {robots, "1.0.0"}
 
