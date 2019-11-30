@@ -2,6 +2,9 @@
 robots
 ======
 
+.. image:: https://travis-ci.org/AntoineGagne/robots.svg?branch=master
+    :target: https://travis-ci.org/AntoineGagne/robots
+
 :Author: `Antoine Gagné <gagnantoine@gmail.com>`_
 
 .. contents::
