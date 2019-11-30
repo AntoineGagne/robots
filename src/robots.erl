@@ -21,7 +21,8 @@
 -type rules() :: [rule()].
 -type content() :: string() | binary().
 -type status() :: allowed | disallowed.
--type rules_index() :: #{agent() := {Allowed :: rules(), Disallowed :: rules()},
+-type allowed_all() :: {allowed, all}.
+-type rules_index() :: #{agent() := {Allowed :: rules(), Disallowed :: rules()} | allowed_all(),
                          sitemap => binary()}.
 -type sitemap() :: binary().
 -opaque agent_rules() :: {status(), all} | rules_index().
@@ -72,7 +73,8 @@ build_rules(Content) when is_list(Content) ->
 build_rules(Content) ->
     Split = string:lexemes(Content, [[$\r, $\n], $\r, $\n]),
     Sanitized = lists:filtermap(fun sanitize/1, Split),
-    {_, _, Rules} = lists:foldl(fun build_rules/2, {[], false, #{}}, Sanitized),
+    WithEof = Sanitized ++ [{<<"eof">>, <<"end">>}],
+    {_, _, Rules} = lists:foldl(fun build_rules/2, {[], false, #{}}, WithEof),
     {ok, maps:map(fun sort_rules/2, Rules)}.
 
 -spec sanitize(binary()) -> false | {true, {binary(), binary()}}.
@@ -93,8 +95,10 @@ handle_line(Line) ->
           false
   end.
 
--spec sort_rules(agent() | sitemap, {[rule()], [rule()]} | binary()) ->
+-spec sort_rules(agent() | sitemap, {[rule()], [rule()]} | allowed_all() | binary()) ->
     binary() | {[rule()], [rule()]}.
+sort_rules(_, Value={allowed, all}) ->
+    Value;
 sort_rules(_, {Allowed, Disallowed}) ->
     Compare = fun (R1, R2) -> not (R1 =< R2) end,
     {lists:sort(Compare, Allowed), lists:sort(Compare, Disallowed)};
@@ -117,6 +121,9 @@ build_rules({<<"allow">>, Rule}, {Agents, _, RulesIndex}) ->
 build_rules({<<"disallow">>, Rule}, {Agents, _, RulesIndex}) ->
     {_, UpdatedIndex} = lists:foldl(fun update_index/2, {{disallowed, Rule}, RulesIndex}, Agents),
     {Agents, true, UpdatedIndex};
+build_rules({<<"eof">>, _}, {Agents, false, RulesIndex}) ->
+    {_, UpdatedIndex} = lists:foldl(fun update_index/2, {{allowed, all}, RulesIndex}, Agents),
+    {Agents, false, UpdatedIndex};
 build_rules({<<"sitemap">>, Map}, {Agents, ParsingRules, RulesIndex}) ->
     {Agents, ParsingRules, RulesIndex#{sitemap => Map}};
 build_rules({_Invalid, _Rule}, Acc) ->
@@ -124,6 +131,10 @@ build_rules({_Invalid, _Rule}, Acc) ->
 
 -spec update_index(agent(), {{status(), rule()}, rules_index()}) ->
     {{status(), rule()}, rules_index()}.
+update_index(Agent, {Rule={allowed, all}, RulesIndex}) ->
+    Update = fun (_) -> Rule end,
+    UpdatedIndex = maps:update_with(Agent, Update, Rule, RulesIndex),
+    {Rule, UpdatedIndex};
 update_index(Agent, {{allowed, Rule}, RulesIndex}) ->
     Update = fun ({Allowed, Disallowed}) -> {[Rule | Allowed], Disallowed} end,
     UpdatedIndex = maps:update_with(Agent, Update, {[Rule], []}, RulesIndex),

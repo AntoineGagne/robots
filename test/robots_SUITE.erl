@@ -29,7 +29,8 @@ all() ->
      can_parse_valid_robots_txt,
      can_handle_malformed_content,
      can_fetch_sitemap,
-     return_error_on_non_existent_sitemap
+     return_error_on_non_existent_sitemap,
+     allow_all_on_unmatched_agents_at_end_of_file
     ].
 
 init_per_testcase(_Name, Config) ->
@@ -90,6 +91,13 @@ return_error_on_non_existent_sitemap(_Config) ->
     {ok, RulesIndex} = robots:parse(?A_VALID_CONTENT, ?A_VALID_CODE),
 
     ?assertMatch({error, not_found}, robots:sitemap(RulesIndex)).
+
+allow_all_on_unmatched_agents_at_end_of_file() ->
+    [{doc, "Given unmatched agents at the end of the file, when parsing, "
+      "then allows everything for those agents."}].
+allow_all_on_unmatched_agents_at_end_of_file(_Config) ->
+    ?assertMatch({ok, #{?USER_AGENT := {allowed, all}}},
+                 robots:parse(<<"User-Agent: ", ?USER_AGENT/binary>>, ?A_VALID_CODE)).
 
 %%%===================================================================
 %%% Internal functions
