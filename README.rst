@@ -14,10 +14,19 @@ robots
 
 A library that parses and validates rules from ``robots.txt``.
 
+Installation
+============
+
+To install this library, simply add the following lines to your ``rebar.config``:
+
+.. code-block: erlang
+
+    {robots, "1.0.0"}
+
 Usage
 =====
 
-.. code::block:: erlang
+.. code-block:: erlang
 
     Content = <<"User-Agent: bot\nAllow: /fish">>,
     %% This will return an opaque type that contains all the rules and their agents
