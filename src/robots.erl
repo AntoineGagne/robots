@@ -10,6 +10,7 @@
 %% API
 -export([parse/2,
          match/2,
+         find_agent/2,
          sitemap/1,
          is_allowed/3]).
 
@@ -65,6 +66,19 @@ sitemap(RulesIndex) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+find_agent(<<>>, RulesIndex) ->
+    case maps:find(?ALL, RulesIndex) of
+        error -> {error, not_found};
+        Result -> Result
+    end;
+find_agent(Agent, RulesIndex) ->
+    case maps:find(Agent, RulesIndex) of
+        Result={ok, _} -> Result;
+        error ->
+            Size = byte_size(Agent),
+            find_agent(binary:part(Agent, 0, Size - 1), RulesIndex)
+    end.
 
 -spec build_rules(binary() | string()) -> {ok, rules_index()}.
 build_rules(Content) when is_list(Content) ->
@@ -249,5 +263,22 @@ simple_path_with_nested_wildcard_test_() ->
      ?_assert(match(<<"/fishheads/catfish.php?parameters">>, Rule)),
 
      ?_assertNot(match(<<"/Fish.PHP">>, Rule))
+    ].
+
+user_agent_matching_test_() ->
+    News = <<"/news">>,
+    All = <<"/all">>,
+    Generic = <<"/generic">>,
+    RulesIndex = #{<<"googlebot-news">> => {[News], []},
+                   <<"*">> => {[All], []},
+                   <<"googlebot">> => {[Generic], []}},
+    [
+     ?_assertMatch({ok, {[News], []}}, find_agent(<<"googlebot-news/1.0.0">>, RulesIndex)),
+     ?_assertMatch({ok, {[Generic], []}}, find_agent(<<"googlebot-web*">>, RulesIndex)),
+     ?_assertMatch({ok, {[Generic], []}}, find_agent(<<"googlebot-images/1.2.0">>, RulesIndex)),
+     ?_assertMatch({ok, {[All], []}}, find_agent(<<"otherbot-web/1.2.0">>, RulesIndex)),
+     ?_assertMatch({ok, {[All], []}}, find_agent(<<"otherbot-news/1.2.0">>, RulesIndex)),
+
+     ?_assertMatch({error, not_found}, find_agent(<<"non-existent/1.0.0">>, #{}))
     ].
 -endif.
