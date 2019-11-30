@@ -9,8 +9,6 @@
 
 %% API
 -export([parse/2,
-         match/2,
-         find_agent/2,
          sitemap/1,
          is_allowed/3]).
 
@@ -52,8 +50,9 @@ is_allowed(_Agent, _Url, {allowed, all}) ->
     true;
 is_allowed(_Agent, _Url, {disallowed, all}) ->
     false;
-is_allowed(_Agent, _Url, _Rules) ->
-    undefined.
+is_allowed(Agent, Url, RulesIndex) ->
+    MaybeRules = find_agent_rules(Agent, RulesIndex),
+    is_allowed(Url, MaybeRules).
 
 -spec sitemap(agent_rules()) -> {ok, sitemap()} | {error, not_found}.
 %% @doc Fetches the sitemap of the parsed index.
@@ -67,20 +66,29 @@ sitemap(RulesIndex) ->
 %%% Internal functions
 %%%===================================================================
 
--spec find_agent(binary(), agent_rules()) ->
+-spec find_agent_rules(binary(), agent_rules()) ->
     {error, not_found} | {ok, {rules(), rules()} | allowed_all()}.
-find_agent(<<>>, RulesIndex) ->
+find_agent_rules(<<>>, RulesIndex) ->
     case maps:find(?ALL, RulesIndex) of
         error -> {error, not_found};
         Result -> Result
     end;
-find_agent(Agent, RulesIndex) ->
+find_agent_rules(Agent, RulesIndex) ->
     case maps:find(Agent, RulesIndex) of
         Result={ok, _} -> Result;
         error ->
             Size = byte_size(Agent),
-            find_agent(binary:part(Agent, 0, Size - 1), RulesIndex)
+            find_agent_rules(binary:part(Agent, 0, Size - 1), RulesIndex)
     end.
+
+-spec is_allowed(binary(), {ok, {rules(), rules()} | allowed_all()} | {error, term()}) -> boolean().
+is_allowed(_Url, {ok, {allowed, all}}) ->
+    true;
+is_allowed(Url, {ok, {Allowed, Disallowed}}) ->
+    Match = fun (Rule) -> match(Url, Rule) end,
+    lists:any(Match, Allowed) orelse not lists:any(Match, Disallowed);
+is_allowed(_Url, {error, _}) ->
+    true.
 
 -spec build_rules(binary() | string()) -> {ok, rules_index()}.
 build_rules(Content) when is_list(Content) ->
@@ -275,12 +283,12 @@ user_agent_matching_test_() ->
                    <<"*">> => {[All], []},
                    <<"googlebot">> => {[Generic], []}},
     [
-     ?_assertMatch({ok, {[News], []}}, find_agent(<<"googlebot-news/1.0.0">>, RulesIndex)),
-     ?_assertMatch({ok, {[Generic], []}}, find_agent(<<"googlebot-web*">>, RulesIndex)),
-     ?_assertMatch({ok, {[Generic], []}}, find_agent(<<"googlebot-images/1.2.0">>, RulesIndex)),
-     ?_assertMatch({ok, {[All], []}}, find_agent(<<"otherbot-web/1.2.0">>, RulesIndex)),
-     ?_assertMatch({ok, {[All], []}}, find_agent(<<"otherbot-news/1.2.0">>, RulesIndex)),
+     ?_assertMatch({ok, {[News], []}}, find_agent_rules(<<"googlebot-news/1.0.0">>, RulesIndex)),
+     ?_assertMatch({ok, {[Generic], []}}, find_agent_rules(<<"googlebot-web*">>, RulesIndex)),
+     ?_assertMatch({ok, {[Generic], []}}, find_agent_rules(<<"googlebot-images*">>, RulesIndex)),
+     ?_assertMatch({ok, {[All], []}}, find_agent_rules(<<"otherbot-web/1.2.0">>, RulesIndex)),
+     ?_assertMatch({ok, {[All], []}}, find_agent_rules(<<"otherbot-news/1.2.0">>, RulesIndex)),
 
-     ?_assertMatch({error, not_found}, find_agent(<<"non-existent/1.0.0">>, #{}))
+     ?_assertMatch({error, not_found}, find_agent_rules(<<"non-existent/1.0.0">>, #{}))
     ].
 -endif.

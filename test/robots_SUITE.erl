@@ -11,10 +11,17 @@
 -define(CODE_5XX, 514).
 -define(EMPTY_CONTENT, <<>>).
 -define(USER_AGENT, <<"bot/1.0.0">>).
+-define(NON_EXISTENT_USER_AGENT, <<"nonexistent/1.0.0">>).
 -define(AN_URL, <<"/bot-url">>).
+-define(A_MATCHING_URL, <<"/foo/">>).
+-define(ANOTHER_MATCHING_URL, <<"/bar">>).
 -define(A_RULE, <<"/foo/*">>).
+-define(ANOTHER_RULE, <<"/bar">>).
 -define(A_VALID_CODE, 200).
 -define(A_VALID_CONTENT, <<"User-Agent: ", ?USER_AGENT/binary, "\nAllow: ", ?A_RULE/binary>>).
+-define(ANOTHER_VALID_CONTENT, <<"User-Agent: ", ?USER_AGENT/binary,
+                                 "\nAllow: ", ?A_RULE/binary,
+                                 "\nDisallow: ", ?ANOTHER_RULE/binary>>).
 -define(A_VALID_CONTENT_WITH_COMMENT, <<?A_VALID_CONTENT/binary, "# this is a comment">>).
 -define(A_MALFORMED_CONTENT, <<"User-Agent: ", ?USER_AGENT/binary, "\n", ?A_RULE/binary>>).
 -define(SITEMAP, <<"http://somesitemap.com/map.xml">>).
@@ -28,11 +35,16 @@ all() ->
      return_true_if_everything_is_allowed,
      return_false_if_everything_is_disallowed,
      can_parse_valid_robots_txt,
+     can_parse_valid_non_binary_robots_txt,
      can_handle_malformed_content,
      can_fetch_sitemap,
      return_error_on_non_existent_sitemap,
      allow_all_on_unmatched_agents_at_end_of_file,
-     ignore_inline_comments
+     ignore_inline_comments,
+     return_true_if_agent_is_allowed,
+     return_false_if_agent_is_disallowed,
+     return_true_if_no_matching_rules_can_be_found,
+     return_true_if_everything_is_allowed_for_the_corresponding_agent
     ].
 
 init_per_testcase(_Name, Config) ->
@@ -74,6 +86,13 @@ can_parse_valid_robots_txt(_Config) ->
     ?assertMatch({ok, #{?USER_AGENT := {[?A_RULE], []}}},
                  robots:parse(?A_VALID_CONTENT, ?A_VALID_CODE)).
 
+can_parse_valid_non_binary_robots_txt() ->
+    [{doc, "Given a valid robots.txt content in non-binary format, when parsing, "
+      "then returns all rules."}].
+can_parse_valid_non_binary_robots_txt(_Config) ->
+    NonBinary = unicode:characters_to_list(?A_VALID_CONTENT),
+    ?assertMatch({ok, #{?USER_AGENT := {[?A_RULE], []}}}, robots:parse(NonBinary, ?A_VALID_CODE)).
+
 can_handle_malformed_content() ->
     [{doc, "Given a malformed content, when parsing, then ignores the malformed part."}].
 can_handle_malformed_content(_Config) ->
@@ -106,6 +125,38 @@ ignore_inline_comments() ->
 ignore_inline_comments(_Config) ->
     ?assertMatch({ok, #{?USER_AGENT := {[?A_RULE], []}}},
                  robots:parse(?A_VALID_CONTENT_WITH_COMMENT, ?A_VALID_CODE)).
+
+return_true_if_agent_is_allowed() ->
+    [{doc, "Given a rules index with allowed URL for the corresponding agent, "
+      "when checking if allowed, then returns true."}].
+return_true_if_agent_is_allowed(_Config) ->
+    {ok, RulesIndex} = robots:parse(?ANOTHER_VALID_CONTENT, ?A_VALID_CODE),
+
+    ?assert(robots:is_allowed(?USER_AGENT, ?A_MATCHING_URL, RulesIndex)).
+
+return_false_if_agent_is_disallowed() ->
+    [{doc, "Given a rules index with disallowed URL for the corresponding agent, "
+      "when checking if allowed, then returns false."}].
+return_false_if_agent_is_disallowed(_Config) ->
+    {ok, RulesIndex} = robots:parse(?ANOTHER_VALID_CONTENT, ?A_VALID_CODE),
+
+    ?assertNot(robots:is_allowed(?USER_AGENT, ?ANOTHER_MATCHING_URL, RulesIndex)).
+
+return_true_if_no_matching_rules_can_be_found() ->
+    [{doc, "Given a rules index with no matching agent, when checking if allowed, "
+      "then returns true."}].
+return_true_if_no_matching_rules_can_be_found(_Config) ->
+    {ok, RulesIndex} = robots:parse(?ANOTHER_VALID_CONTENT, ?A_VALID_CODE),
+
+    ?assert(robots:is_allowed(?NON_EXISTENT_USER_AGENT, ?ANOTHER_MATCHING_URL, RulesIndex)).
+
+return_true_if_everything_is_allowed_for_the_corresponding_agent() ->
+    [{doc, "Given a rules index with an agent for which everything is allowed, "
+      "when checking if allowed, then returns true."}].
+return_true_if_everything_is_allowed_for_the_corresponding_agent(_Config) ->
+    {ok, RulesIndex} = robots:parse(<<"User-Agent: ", ?USER_AGENT/binary>>, ?A_VALID_CODE),
+
+    ?assert(robots:is_allowed(?USER_AGENT, ?AN_URL, RulesIndex)).
 
 %%%===================================================================
 %%% Internal functions
