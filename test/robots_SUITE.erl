@@ -15,6 +15,7 @@
 -define(A_RULE, <<"/foo/*">>).
 -define(A_VALID_CODE, 200).
 -define(A_VALID_CONTENT, <<"User-Agent: ", ?USER_AGENT/binary, "\nAllow: ", ?A_RULE/binary>>).
+-define(A_VALID_CONTENT_WITH_COMMENT, <<?A_VALID_CONTENT/binary, "# this is a comment">>).
 -define(A_MALFORMED_CONTENT, <<"User-Agent: ", ?USER_AGENT/binary, "\n", ?A_RULE/binary>>).
 -define(SITEMAP, <<"http://somesitemap.com/map.xml">>).
 -define(CONTENT_WITH_SITEMAP, <<"Sitemap:", ?SITEMAP/binary>>).
@@ -30,7 +31,8 @@ all() ->
      can_handle_malformed_content,
      can_fetch_sitemap,
      return_error_on_non_existent_sitemap,
-     allow_all_on_unmatched_agents_at_end_of_file
+     allow_all_on_unmatched_agents_at_end_of_file,
+     ignore_inline_comments
     ].
 
 init_per_testcase(_Name, Config) ->
@@ -98,6 +100,12 @@ allow_all_on_unmatched_agents_at_end_of_file() ->
 allow_all_on_unmatched_agents_at_end_of_file(_Config) ->
     ?assertMatch({ok, #{?USER_AGENT := {allowed, all}}},
                  robots:parse(<<"User-Agent: ", ?USER_AGENT/binary>>, ?A_VALID_CODE)).
+
+ignore_inline_comments() ->
+    [{doc, "Given a rule with a comment in it, when parsing, then ignores the comment."}].
+ignore_inline_comments(_Config) ->
+    ?assertMatch({ok, #{?USER_AGENT := {[?A_RULE], []}}},
+                 robots:parse(?A_VALID_CONTENT_WITH_COMMENT, ?A_VALID_CODE)).
 
 %%%===================================================================
 %%% Internal functions
