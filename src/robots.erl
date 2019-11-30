@@ -67,6 +67,8 @@ sitemap(RulesIndex) ->
 %%% Internal functions
 %%%===================================================================
 
+-spec find_agent(binary(), agent_rules()) ->
+    {error, not_found} | {ok, {rules(), rules()} | allowed_all()}.
 find_agent(<<>>, RulesIndex) ->
     case maps:find(?ALL, RulesIndex) of
         error -> {error, not_found};
