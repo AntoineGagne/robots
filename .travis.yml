@@ -5,6 +5,9 @@ otp_release:
 script:
     - rebar3 check
 
+after_success:
+  - rebar3 coveralls send
+
 cache:
     directories:
         - "$HOME/.cache/rebar3"

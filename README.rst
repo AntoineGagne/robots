@@ -5,6 +5,16 @@ robots
 .. image:: https://travis-ci.org/AntoineGagne/robots.svg?branch=master
     :target: https://travis-ci.org/AntoineGagne/robots
 
+.. image:: http://img.shields.io/hexpm/v/robots.svg?style=flat
+    :target: https://hex.pm/packages/robots
+
+.. image:: https://img.shields.io/github/release/AntoineGagne/robots?color=brightgreen
+    :target: https://github.com/AntoineGagne/robots/releases
+
+.. image:: https://coveralls.io/repos/github/AntoineGagne/robots/badge.svg?branch=master
+    :target: https://coveralls.io/github/AntoineGagne/robots?branch=master
+
+
 :Author: `Antoine Gagné <gagnantoine@gmail.com>`_
 
 .. contents::
