@@ -99,3 +99,4 @@ tags
 ### Custom
 .envrc
 src/robots_lexer.erl
+src/robots_parser.erl

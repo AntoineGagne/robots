@@ -7,7 +7,7 @@ StartGroupLine = (u|U)(s|S)(e|E)(r|R)(-)(a|A)(g|G)(e|E)(n|N)(t|T)
 SiteMap = (s|S)(i|I)(t|T)(e|E)(m|M)(a|A)(p|P)
 Allow = (a|A)(l|L)(l|L)(o|O)(w|W)
 Disallow = (d|D)(i|I)(s|S)(a|A)(l|L)(l|L)(o|O)(w|W)
-Comment = (#).*
+Comment = (#)(.*)
 Wildcard = \*
 
 Rules.
@@ -26,4 +26,4 @@ Erlang code.
 
 remove_semi_colon(Characters) ->
     Length = string:len(Characters),
-    string:substr(Characters, 1, Length).
+    string:substr(Characters, 2, Length).
