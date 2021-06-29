@@ -84,11 +84,11 @@ find_agent_rules(<<>>, RulesIndex) ->
     end;
 find_agent_rules(Agent, RulesIndex) ->
     case maps:find(Agent, RulesIndex) of
-        Result = {ok, _} ->
-            Result;
         error ->
             <<_:1/binary, Rest/binary>> = Agent,
-            find_agent_rules(Rest, RulesIndex)
+            find_agent_rules(Rest, RulesIndex);
+        Result ->
+            Result
     end.
 
 -spec is_allowed(binary(), {ok, {rules(), rules()} | allowed_all()} | {error, term()}) -> boolean().
