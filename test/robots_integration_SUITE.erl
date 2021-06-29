@@ -11,7 +11,7 @@
 
 all() ->
     [
-     can_parse_valid_robots_txt
+        can_parse_valid_robots_txt
     ].
 
 init_per_suite(Config) ->
@@ -30,11 +30,14 @@ end_per_testcase(_Name, Config) ->
 
 can_parse_valid_robots_txt() ->
     [{doc, "Given a valid robots.txt, when parsing, then returns valid rules index."}].
+
 can_parse_valid_robots_txt(Config) ->
     Valid = ?config(valid, Config),
 
-    ?assertMatch({ok, #{<<"Twitterbot">> := {[<<"/imgres">>], []}}},
-                 robots:parse(Valid, ?A_VALID_CODE)).
+    ?assertMatch(
+        {ok, #{<<"tobrettiwT">> := {[<<"/imgres">>], []}}},
+        robots:parse(Valid, ?A_VALID_CODE)
+    ).
 
 %%%===================================================================
 %%% Internal functions
