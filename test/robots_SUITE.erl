@@ -28,33 +28,33 @@
 -define(CONTENT_WITH_SITEMAP, <<"Sitemap:", ?SITEMAP/binary>>).
 
 all() ->
+    [{group, all}].
+
+groups() ->
     [
-     return_error_on_unsupported_status_code,
-     allow_all_on_4xx_code,
-     disallow_all_on_5xx,
-     return_true_if_everything_is_allowed,
-     return_false_if_everything_is_disallowed,
-     can_parse_valid_robots_txt,
-     can_parse_valid_non_binary_robots_txt,
-     can_handle_malformed_content,
-     can_fetch_sitemap,
-     return_error_on_non_existent_sitemap,
-     allow_all_on_unmatched_agents_at_end_of_file,
-     ignore_inline_comments,
-     return_true_if_agent_is_allowed,
-     return_false_if_agent_is_disallowed,
-     return_true_if_no_matching_rules_can_be_found,
-     return_true_if_everything_is_allowed_for_the_corresponding_agent
+        {all, [parallel], [
+            return_error_on_unsupported_status_code,
+            allow_all_on_4xx_code,
+            disallow_all_on_5xx,
+            return_true_if_everything_is_allowed,
+            return_false_if_everything_is_disallowed,
+            can_parse_valid_robots_txt,
+            can_parse_valid_non_binary_robots_txt,
+            can_handle_malformed_content,
+            can_fetch_sitemap,
+            return_error_on_non_existent_sitemap,
+            allow_all_on_unmatched_agents_at_end_of_file,
+            ignore_inline_comments,
+            return_true_if_agent_is_allowed,
+            return_false_if_agent_is_disallowed,
+            return_true_if_no_matching_rules_can_be_found,
+            return_true_if_everything_is_allowed_for_the_corresponding_agent
+        ]}
     ].
-
-init_per_testcase(_Name, Config) ->
-    Config.
-
-end_per_testcase(_Name, Config) ->
-    Config.
 
 return_error_on_unsupported_status_code() ->
     [{doc, "Given an unsupported status code, when parsing, then returns an error."}].
+
 return_error_on_unsupported_status_code(_Config) ->
     ?assertMatch({error, _}, robots:parse(?EMPTY_CONTENT, ?UNSUPPORTED_CODE)).
 
