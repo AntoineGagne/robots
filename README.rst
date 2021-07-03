@@ -2,8 +2,8 @@
 robots
 ======
 
-.. image:: https://travis-ci.org/AntoineGagne/robots.svg?branch=master
-    :target: https://travis-ci.org/AntoineGagne/robots
+.. image:: https://github.com/AntoineGagne/robots/actions/workflows/erlang.yml/badge.svg
+    :target: https://github.com/AntoineGagne/robots/actions
 
 .. image:: http://img.shields.io/hexpm/v/robots.svg?style=flat
     :target: https://hex.pm/packages/robots
