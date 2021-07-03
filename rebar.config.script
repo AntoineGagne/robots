@@ -4,10 +4,9 @@ case {os:getenv("GITHUB_ACTIONS"), os:getenv("GITHUB_TOKEN")} of
                {coveralls_service_job_id, os:getenv("GITHUB_RUN_ID")},
                {coveralls_commit_sha, os:getenv("GITHUB_SHA")},
                {coveralls_service_number, os:getenv("GITHUB_RUN_NUMBER")} | CONFIG],
-    case os:getenv("GITHUB_EVENT_NAME") =:= "pull_request"
-        andalso string:tokens(os:getenv("GITHUB_REF"), "/") of
-        [_, "pull", PRNO, _] ->
-            [{coveralls_service_pull_request, PRNO} | CONFIG1];
+    case {os:getenv("GITHUB_EVENT_NAME"), os:getenv("GITHUB_REF")} of
+        {"pull_request", Ref} ->
+            [{coveralls_service_pull_request, Ref} | CONFIG1];
         _ ->
             CONFIG1
     end;
