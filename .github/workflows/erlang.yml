@@ -43,7 +43,20 @@ jobs:
 
       - name: Checks
         run: rebar3 check
+
       - name: Coveralls
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: rebar3 as test coveralls send
+
+  finish:
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+           curl -v -k https://coveralls.io/webhook \
+                --header "Content-Type: application/json" \
+                --data "{\"repo_name\":\"$GITHUB_REPOSITORY\",\"repo_token\":\"$GITHUB_TOKEN\",\"payload\":{\"build_num\":$GITHUB_RUN_ID,\"status\":\"done\"}}"
