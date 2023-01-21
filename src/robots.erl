@@ -1,6 +1,6 @@
 %% @author Antoine Gagné <gagnantoine@gmail.com>
-%% @copyright 2021 Antoine Gagné
-%% @doc Parse and manipulate robots.txt files according to the specification.
+%% @copyright 2023 Antoine Gagné
+%% @doc Parse and manipulate robots.txt files according to the specification (RFC 9309).
 -module(robots).
 
 -ifdef(TEST).
