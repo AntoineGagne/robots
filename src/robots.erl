@@ -56,9 +56,9 @@ is_allowed(_Agent, _Url, {allowed, all}) ->
     true;
 is_allowed(_Agent, _Url, {disallowed, all}) ->
     false;
-is_allowed(Agent, Url, RulesIndex) ->
-    Reversed = reverse(Agent),
-    MaybeRules = find_agent_rules(Reversed, RulesIndex),
+is_allowed(RawAgent, Url, RulesIndex) ->
+    Agent = to_agent(RawAgent),
+    MaybeRules = find_agent_rules(Agent, RulesIndex),
     is_allowed(Url, MaybeRules).
 
 -spec sitemap(agent_rules()) -> {ok, sitemap()} | {error, not_found}.
@@ -145,11 +145,11 @@ trim(String) ->
 
 -spec build_rules({binary(), binary()}, {[agent()], boolean(), rules_index()}) ->
     {[agent()], boolean(), rules_index()}.
-build_rules({<<"user-agent">>, Agent}, {Agents, false, RulesIndex}) ->
-    Reversed = reverse(Agent),
+build_rules({<<"user-agent">>, RawAgent}, {Agents, false, RulesIndex}) ->
+    Reversed = to_agent(RawAgent),
     {[Reversed | Agents], false, RulesIndex};
-build_rules({<<"user-agent">>, Agent}, {_Agents, true, RulesIndex}) ->
-    Reversed = reverse(Agent),
+build_rules({<<"user-agent">>, RawAgent}, {_Agents, true, RulesIndex}) ->
+    Reversed = to_agent(RawAgent),
     {[Reversed], false, RulesIndex};
 build_rules({<<"allow">>, Rule}, {Agents, _, RulesIndex}) ->
     {_, UpdatedIndex} = lists:foldl(fun update_index/2, {{allowed, Rule}, RulesIndex}, Agents),
@@ -205,6 +205,11 @@ match(<<A, R1/binary>>, <<A, R2/binary>>) ->
     match(R1, R2);
 match(<<_, _/binary>>, <<_, _/binary>>) ->
     false.
+
+-spec to_agent(Raw :: binary()) -> unicode:chardata().
+to_agent(Raw) ->
+    Reversed = reverse(Raw),
+    string:lowercase(Reversed).
 
 %% Taken from: https://stackoverflow.com/a/43310493
 -spec reverse(binary()) -> binary().

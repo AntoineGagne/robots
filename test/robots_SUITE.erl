@@ -11,6 +11,7 @@
 -define(CODE_5XX, 514).
 -define(EMPTY_CONTENT, <<>>).
 -define(USER_AGENT, <<"bot/1.0.0">>).
+-define(ANOTHER_USER_AGENT, <<"BoT/1.0.0">>).
 -define(REVERSED_USER_AGENT, <<"0.0.1/tob">>).
 -define(NON_EXISTENT_USER_AGENT, <<"nonexistent/1.0.0">>).
 -define(AN_URL, <<"/bot-url">>).
@@ -23,6 +24,10 @@
 -define(ANOTHER_VALID_CONTENT,
     <<"User-Agent: ", ?USER_AGENT/binary, "\nAllow: ", ?A_RULE/binary, "\nDisallow: ",
         ?ANOTHER_RULE/binary>>
+).
+-define(SOME_CONTENT_WITH_REPEATED_AGENTS,
+    <<"User-Agent: ", ?USER_AGENT/binary, "\nAllow: ", ?A_RULE/binary, "\nUser-Agent: ",
+        ?ANOTHER_USER_AGENT/binary, "\nDisallow: ", ?ANOTHER_RULE/binary>>
 ).
 
 -define(A_VALID_CONTENT_WITH_COMMENT, <<?A_VALID_CONTENT/binary, "# this is a comment">>).
@@ -44,11 +49,13 @@ groups() ->
             can_parse_valid_robots_txt,
             can_parse_valid_non_binary_robots_txt,
             can_handle_malformed_content,
+            merge_repeated_agent,
             can_fetch_sitemap,
             return_error_on_non_existent_sitemap,
             allow_all_on_unmatched_agents_at_end_of_file,
             ignore_inline_comments,
             return_true_if_agent_is_allowed,
+            match_independently_of_the_casing_of_the_agent,
             return_false_if_agent_is_disallowed,
             return_true_if_no_matching_rules_can_be_found,
             return_true_if_everything_is_allowed_for_the_corresponding_agent
@@ -154,6 +161,17 @@ allow_all_on_unmatched_agents_at_end_of_file(_Config) ->
         robots:parse(<<"User-Agent: ", ?USER_AGENT/binary>>, ?A_VALID_CODE)
     ).
 
+merge_repeated_agent() ->
+    [
+        {doc,
+            "Given a rules index with the same user agent repeated, when parsing, then merges the rules."}
+    ].
+merge_repeated_agent(_Config) ->
+    ?assertMatch(
+        {ok, #{?REVERSED_USER_AGENT := {[<<"/foo/*">>], [<<"/bar">>]}}},
+        robots:parse(?SOME_CONTENT_WITH_REPEATED_AGENTS, ?A_VALID_CODE)
+    ).
+
 ignore_inline_comments() ->
     [{doc, "Given a rule with a comment in it, when parsing, then ignores the comment."}].
 
@@ -174,6 +192,18 @@ return_true_if_agent_is_allowed(_Config) ->
     {ok, RulesIndex} = robots:parse(?ANOTHER_VALID_CONTENT, ?A_VALID_CODE),
 
     ?assert(robots:is_allowed(?USER_AGENT, ?A_MATCHING_URL, RulesIndex)).
+
+match_independently_of_the_casing_of_the_agent() ->
+    [
+        {doc,
+            "Given a rules index with allowed URL for the corresponding agent, "
+            "when checking if allowed with the allowed agent in different casing, "
+            "then returns true."}
+    ].
+match_independently_of_the_casing_of_the_agent(_Config) ->
+    {ok, RulesIndex} = robots:parse(?ANOTHER_VALID_CONTENT, ?A_VALID_CODE),
+
+    ?assert(robots:is_allowed(string:uppercase(?USER_AGENT), ?A_MATCHING_URL, RulesIndex)).
 
 return_false_if_agent_is_disallowed() ->
     [
@@ -205,7 +235,6 @@ return_true_if_everything_is_allowed_for_the_corresponding_agent() ->
             "Given a rules index with an agent for which everything is allowed, "
             "when checking if allowed, then returns true."}
     ].
-
 return_true_if_everything_is_allowed_for_the_corresponding_agent(_Config) ->
     {ok, RulesIndex} = robots:parse(<<"User-Agent: ", ?USER_AGENT/binary>>, ?A_VALID_CODE),
 

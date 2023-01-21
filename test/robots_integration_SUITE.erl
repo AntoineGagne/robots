@@ -35,7 +35,7 @@ can_parse_valid_robots_txt(Config) ->
     Valid = ?config(valid, Config),
 
     ?assertMatch(
-        {ok, #{<<"tobrettiwT">> := {[<<"/imgres">>], []}}},
+        {ok, #{<<"tobrettiwt">> := {[<<"/imgres">>], []}}},
         robots:parse(Valid, ?A_VALID_CODE)
     ).
 
