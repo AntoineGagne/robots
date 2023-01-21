@@ -44,7 +44,7 @@ Usage
     %% This will return an opaque type that contains all the rules and their agents
     {ok, RulesIndex} = robots:parse(Content, 200),
     true = robots:is_allowed(<<"bot/1.0.0">>, <<"/fish/salmon.html">>, RulesIndex),
-    false = robots:is_allowed(<<"bot/1.0.0">>, <<"/Fish.asp">>, RulesIndex),
+    true = robots:is_allowed(<<"bot/1.0.0">>, <<"/Fish.asp">>, RulesIndex),
 
 Development
 ===========
