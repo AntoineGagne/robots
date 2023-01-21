@@ -55,6 +55,7 @@ groups() ->
             allow_all_on_unmatched_agents_at_end_of_file,
             ignore_inline_comments,
             return_true_if_agent_is_allowed,
+            match_independently_of_the_casing_of_the_agent,
             return_false_if_agent_is_disallowed,
             return_true_if_no_matching_rules_can_be_found,
             return_true_if_everything_is_allowed_for_the_corresponding_agent
@@ -191,6 +192,18 @@ return_true_if_agent_is_allowed(_Config) ->
     {ok, RulesIndex} = robots:parse(?ANOTHER_VALID_CONTENT, ?A_VALID_CODE),
 
     ?assert(robots:is_allowed(?USER_AGENT, ?A_MATCHING_URL, RulesIndex)).
+
+match_independently_of_the_casing_of_the_agent() ->
+    [
+        {doc,
+            "Given a rules index with allowed URL for the corresponding agent, "
+            "when checking if allowed with the allowed agent in different casing, "
+            "then returns true."}
+    ].
+match_independently_of_the_casing_of_the_agent(_Config) ->
+    {ok, RulesIndex} = robots:parse(?ANOTHER_VALID_CONTENT, ?A_VALID_CODE),
+
+    ?assert(robots:is_allowed(string:uppercase(?USER_AGENT), ?A_MATCHING_URL, RulesIndex)).
 
 return_false_if_agent_is_disallowed() ->
     [
