@@ -12,9 +12,10 @@ jobs:
     strategy:
       matrix:
         otp:
-          - '24'
-          - '23'
-          - '22'
+          - '25.2.1'
+          - '24.3.4'
+          - '23.3.4'
+          - '22.3.4'
         rebar3:
           - '3'
     steps:
@@ -24,6 +25,7 @@ jobs:
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{matrix.otp}}
+          version-type: strict
           rebar3-version: ${{matrix.rebar3}}
 
       - uses: actions/cache@v2
