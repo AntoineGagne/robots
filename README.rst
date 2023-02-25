@@ -33,7 +33,7 @@ To install this library, simply add the following lines to your
 
 .. code-block:: erlang
 
-    {robots, "1.1.0"}
+    {robots, "1.1.1"}
 
 Usage
 =====
