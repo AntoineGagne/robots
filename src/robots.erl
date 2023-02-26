@@ -278,7 +278,7 @@ nested_wildcard_test_() ->
         ?_assertNot(match(<<"/windows.PHP">>, Rule))
     ].
 
-nested_wilcard_with_ending_test_() ->
+nested_wildcard_with_ending_test_() ->
     Rule = <<"/*.php$">>,
     [
         ?_assert(match(<<"/filename.php">>, Rule)),
