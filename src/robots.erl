@@ -134,7 +134,7 @@ handle_line(Line) ->
 sort_rules(_, Value = {allowed, all}) ->
     Value;
 sort_rules(_, {Allowed, Disallowed}) ->
-    Compare = fun(R1, R2) -> not (R1 =< R2) end,
+    Compare = fun(R1, R2) -> R1 > R2 end,
     {lists:sort(Compare, Allowed), lists:sort(Compare, Disallowed)};
 sort_rules(sitemap, Value) ->
     Value.
@@ -143,17 +143,23 @@ sort_rules(sitemap, Value) ->
 trim(String) ->
     string:trim(String, both).
 
--spec build_rules({binary(), binary()}, {[agent()], boolean(), rules_index()}) ->
-    {[agent()], boolean(), rules_index()}.
+-spec build_rules({binary(), binary()}, {[agent()], IsFirstAgent, rules_index()}) ->
+    {[agent()], IsFirstAgent, rules_index()}
+when
+    IsFirstAgent :: boolean().
 build_rules({<<"user-agent">>, RawAgent}, {Agents, false, RulesIndex}) ->
     Reversed = to_agent(RawAgent),
     {[Reversed | Agents], false, RulesIndex};
 build_rules({<<"user-agent">>, RawAgent}, {_Agents, true, RulesIndex}) ->
     Reversed = to_agent(RawAgent),
     {[Reversed], false, RulesIndex};
+build_rules({<<"allow">>, <<>>}, {Agents, _, RulesIndex}) ->
+    {Agents, true, RulesIndex};
 build_rules({<<"allow">>, Rule}, {Agents, _, RulesIndex}) ->
     {_, UpdatedIndex} = lists:foldl(fun update_index/2, {{allowed, Rule}, RulesIndex}, Agents),
     {Agents, true, UpdatedIndex};
+build_rules({<<"disallow">>, <<>>}, {Agents, _, RulesIndex}) ->
+    {Agents, true, RulesIndex};
 build_rules({<<"disallow">>, Rule}, {Agents, _, RulesIndex}) ->
     {_, UpdatedIndex} = lists:foldl(fun update_index/2, {{disallowed, Rule}, RulesIndex}, Agents),
     {Agents, true, UpdatedIndex};

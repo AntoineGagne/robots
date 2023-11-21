@@ -21,6 +21,14 @@
 -define(ANOTHER_RULE, <<"/bar">>).
 -define(A_VALID_CODE, 200).
 -define(A_VALID_CONTENT, <<"User-Agent: ", ?USER_AGENT/binary, "\nAllow: ", ?A_RULE/binary>>).
+-define(SOME_CONTENT_WITH_EMPTY_RULES, <<
+    "# START YOAST BLOCK\n"
+    "# ---------------------------\n"
+    "User-agent: *\n"
+    "Disallow:\n"
+    "# ---------------------------\n"
+    "# END YOAST BLOCK\n"
+>>).
 -define(ANOTHER_VALID_CONTENT,
     <<"User-Agent: ", ?USER_AGENT/binary, "\nAllow: ", ?A_RULE/binary, "\nDisallow: ",
         ?ANOTHER_RULE/binary>>
@@ -58,7 +66,8 @@ groups() ->
             match_independently_of_the_casing_of_the_agent,
             return_false_if_agent_is_disallowed,
             return_true_if_no_matching_rules_can_be_found,
-            return_true_if_everything_is_allowed_for_the_corresponding_agent
+            return_true_if_everything_is_allowed_for_the_corresponding_agent,
+            ignore_empty_rules
         ]}
     ].
 
@@ -237,6 +246,16 @@ return_true_if_everything_is_allowed_for_the_corresponding_agent() ->
     ].
 return_true_if_everything_is_allowed_for_the_corresponding_agent(_Config) ->
     {ok, RulesIndex} = robots:parse(<<"User-Agent: ", ?USER_AGENT/binary>>, ?A_VALID_CODE),
+
+    ?assert(robots:is_allowed(?USER_AGENT, ?AN_URL, RulesIndex)).
+
+ignore_empty_rules() ->
+    [
+        {doc,
+            "Given a robot.txt with a wildcard associated with an empty rules, when parsing, then allow everything."}
+    ].
+ignore_empty_rules(_Config) ->
+    {ok, RulesIndex} = robots:parse(?SOME_CONTENT_WITH_EMPTY_RULES, ?A_VALID_CODE),
 
     ?assert(robots:is_allowed(?USER_AGENT, ?AN_URL, RulesIndex)).
 
