@@ -29,6 +29,7 @@
     "# ---------------------------\n"
     "# END YOAST BLOCK\n"
 >>).
+-define(A_STRAY_RULE, <<"Disallow: /path/">>).
 -define(ANOTHER_VALID_CONTENT,
     <<"User-Agent: ", ?USER_AGENT/binary, "\nAllow: ", ?A_RULE/binary, "\nDisallow: ",
         ?ANOTHER_RULE/binary>>
@@ -67,7 +68,8 @@ groups() ->
             return_false_if_agent_is_disallowed,
             return_true_if_no_matching_rules_can_be_found,
             return_true_if_everything_is_allowed_for_the_corresponding_agent,
-            ignore_empty_rules
+            ignore_empty_rules,
+            ignore_stray_rules
         ]}
     ].
 
@@ -258,6 +260,13 @@ ignore_empty_rules(_Config) ->
     {ok, RulesIndex} = robots:parse(?SOME_CONTENT_WITH_EMPTY_RULES, ?A_VALID_CODE),
 
     ?assert(robots:is_allowed(?USER_AGENT, ?AN_URL, RulesIndex)).
+
+ignore_stray_rules() ->
+    [{doc, "Given a stray rule, when parsing, then ignores the stray rules."}].
+ignore_stray_rules(_Config) ->
+    {ok, RulesIndex} = robots:parse(?A_STRAY_RULE, ?A_VALID_CODE),
+
+    ?assertEqual(#{}, RulesIndex).
 
 %%%===================================================================
 %%% Internal functions
